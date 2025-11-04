@@ -1,0 +1,23 @@
+:root{
+  --primary:#004E7C;
+  --accent:#35A8E0;
+  --bg:#f8f9fa;
+}
+body{ font-family: 'Segoe UI', system-ui, Arial, sans-serif; background: var(--bg); }
+h1,h2,h3,h4,h5{ color: var(--primary); }
+
+/* hero */
+.hero{ background: linear-gradient(180deg,#ffffff, #f3f8fb); }
+
+/* tarjetas categorías */
+.cat-card{ text-decoration:none; color:inherit; transition:transform .2s ease, box-shadow .2s ease;}
+.cat-card:hover{ transform: translateY(-4px); box-shadow:0 10px 24px rgba(0,0,0,.08); }
+.cat-card .card-title{ color: var(--primary); }
+
+/* botones coherentes */
+.btn-primary{ background-color: var(--primary); border-color: var(--primary); }
+.btn-outline-primary{ color: var(--primary); border-color: var(--primary); }
+.btn-outline-primary:hover{ background: var(--primary); color:#fff; }
+
+/* tablas/carrito */
+.table td, .table th{ vertical-align: middle; }
