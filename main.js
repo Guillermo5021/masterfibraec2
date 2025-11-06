@@ -103,9 +103,11 @@ function renderCartTable(){
       form.address.value= USER.address||'';
     }
 
+    // ====== ENVÍO DE PEDIDO ======
     form.onsubmit = async (e)=>{
       e.preventDefault();
 
+      // 🧾 Guardar datos del cliente
       USER = {
         name:   form.name.value.trim(),
         email:  form.email.value.trim(),
@@ -118,13 +120,13 @@ function renderCartTable(){
       const total = cartTotal().toFixed(2);
       const pedido = { ...USER, cart: CART, total, fecha: new Date().toISOString() };
 
-      // 🔥 Firebase
+      // 🔥 Guardar en Firebase
       const okFirebase = await (window.saveOrderToFirebase ? saveOrderToFirebase(pedido) : false);
 
-      // ✉️ EmailJS
+      // ✉️ Enviar correos con EmailJS
       const okEmail = await (window.sendEmailNotification ? sendEmailNotification(pedido) : false);
 
-      // ✅ Mostrar modal
+      // 💬 Mostrar resultado en el modal
       const msgBox = document.getElementById('orderModalMsg');
       if (okFirebase && okEmail){
         msgBox.textContent = `Gracias ${USER.name}, tu pedido fue registrado correctamente. Recibirás una copia en tu correo.`;
@@ -134,10 +136,18 @@ function renderCartTable(){
         msgBox.textContent = `Hubo un problema al procesar tu pedido. Verifica tu conexión.`;
       }
 
+      // Mostrar el modal
       const modal = new bootstrap.Modal(document.getElementById('orderModal'));
       modal.show();
 
-      // 🔗 PayPal
+      // 🧹 Limpiar carrito y formulario
+      CART = [];
+      saveCart();
+      renderCartTable();
+      form.reset();
+      localStorage.removeItem(USER_KEY); // opcional: borra datos guardados del usuario
+
+      // 🔗 Abrir PayPal
       const paypalLink = `https://paypal.me/ElvisGomez1985/${total}`;
       window.open(paypalLink, '_blank');
     };
