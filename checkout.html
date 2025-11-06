@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Finalizar compra | Master Fibra</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-gray-50">
+  <header class="container">
+    <h1>Finalizar compra</h1>
+  </header>
+
+  <main class="container" style="max-width:900px">
+    <form id="checkout-form" class="card">
+      <h2>Datos del cliente</h2>
+      <div class="grid-2">
+        <label>Nombre y apellido
+          <input type="text" name="nombre" required />
+        </label>
+        <label>Correo
+          <input type="email" name="correo" required />
+        </label>
+        <label>Teléfono / WhatsApp
+          <input type="tel" name="telefono" required />
+        </label>
+        <label>Ciudad
+          <input type="text" name="ciudad" required />
+        </label>
+      </div>
+      <label>Dirección
+        <input type="text" name="direccion" required />
+      </label>
+      <label>Notas del pedido (opcional)
+        <textarea name="notas" rows="3"></textarea>
+      </label>
+
+      <div class="card mt">
+        <h3>Resumen del carrito</h3>
+        <div id="cart-summary" class="mt-sm"></div>
+        <p class="mt"><strong>Total:</strong> $<span id="cart-total">0.00</span></p>
+      </div>
+
+      <button class="btn-primary mt" type="submit">Confirmar pedido</button>
+      <p id="checkout-msg" class="mt"></p>
+    </form>
+  </main>
+
+  <!-- EmailJS (sin backend) -->
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <script>
+    // 🔐 Pega tus claves de EmailJS aquí (paso 4 de las instrucciones)
+    const EMAILJS_PUBLIC_KEY  = "TU_PUBLIC_KEY";
+    const EMAILJS_SERVICE_ID  = "TU_SERVICE_ID";
+    const EMAILJS_TEMPLATE_ID = "TU_TEMPLATE_ID";
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+  </script>
+
+  <!-- Firebase config (exporta db, auth, etc.) -->
+  <script type="module" src="./firebase-config.js"></script>
+
+  <!-- Lógica de checkout -->
+  <script type="module" src="./checkout.js"></script>
+</body>
+</html>

@@ -1,84 +1,206 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tienda | Master Fibra de Vidrio</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<header class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
-  <div class="container">
-    <a class="navbar-brand" href="index.html"><img src="images/logo.webp" height="56" alt=""></a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
-    <div class="collapse navbar-collapse" id="nav">
-      <ul class="navbar-nav ms-auto align-items-lg-center">
-        <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
-        <li class="nav-item"><a class="nav-link active" href="shop.html">Tienda</a></li>
-        <li class="nav-item"><a class="nav-link" href="contact.html">Contacto</a></li>
-        <li class="nav-item ms-lg-3"><a class="btn btn-outline-primary position-relative" href="cart.html">🛒 <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">0</span></a></li>
-      </ul>
-    </div>
-  </div>
-</header>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tienda MasterFibraEC</title>
 
-<section class="container py-4">
-  <div class="d-flex flex-wrap gap-3 align-items-center mb-3">
-    <h1 class="h3 m-0 text-primary">Tienda</h1>
-    <select id="filterCategory" class="form-select w-auto">
-      <option value="all">Todas las categorías</option>
-      <option value="carrocerias">Carrocerías</option>
-      <option value="macetas">Macetas</option>
-      <option value="piezas">Piezas</option>
-    </select>
-  </div>
+  <script type="module">
+    // ======= CONFIGURACIÓN FIREBASE =======
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-  <div id="productGrid" class="row g-4"></div>
-</section>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5OQhX5_Uu3lunMBxcOqQL4yHhe-vdXzA",
+      authDomain: "masterfibraec.firebaseapp.com",
+      projectId: "masterfibraec",
+      storageBucket: "masterfibraec.firebasestorage.app",
+      messagingSenderId: "568089252571",
+      appId: "1:568089252571:web:db36ba765eaa45029c32fe"
+    };
 
-<footer class="text-center py-4 text-white" style="background-color:#004E7C">
-  © 2025 Master Fibra de Vidrio – Sitio desarrollado por Ing. Elvis Gómez
-</footer>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-<script src="products.js"></script>
-<script src="main.js"></script>
-<script>
-  // Render inicial y filtro
-  const grid = document.getElementById('productGrid');
-  const select = document.getElementById('filterCategory');
+    // ======= GUARDAR PEDIDO =======
+    async function guardarPedido() {
+      const nombre = document.getElementById("nombre").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const producto = document.getElementById("producto").value.trim();
+      const total = parseFloat(document.getElementById("total").value);
 
-  function renderProducts(cat='all'){
-    grid.innerHTML = '';
-    const items = cat==='all' ? PRODUCTS : PRODUCTS.filter(p=>p.category===cat);
-    items.forEach(p=>{
-      const col = document.createElement('div');
-      col.className = 'col-12 col-sm-6 col-lg-4';
-      col.innerHTML = `
-        <div class="card h-100 shadow-sm">
-          <img src="${p.image}" class="card-img-top" alt="${p.name}">
-          <div class="card-body d-flex flex-column">
-            <h5 class="card-title">${p.name}</h5>
-            <p class="text-muted small mb-2">${p.categoryLabel}</p>
-            <p class="card-text flex-grow-1">${p.short}</p>
-            <div class="d-flex justify-content-between align-items-center">
-              <span class="h6 m-0">$${p.price}</span>
-              <div class="d-flex gap-2">
-                <a href="product.html?id=${p.id}" class="btn btn-outline-secondary btn-sm">Ver más</a>
-                <button class="btn btn-primary btn-sm" onclick="addToCart('${p.id}')">Agregar</button>
-              </div>
-            </div>
+      if (!nombre || !email || !producto || isNaN(total)) {
+        alert("⚠️ Por favor completa todos los campos correctamente.");
+        return;
+      }
+
+      try {
+        const fecha = new Date().toISOString().split("T")[0];
+
+        // Guardar pedido en Firebase
+        const docRef = await addDoc(collection(db, "orders"), {
+          nombre,
+          email,
+          productos: producto,
+          total,
+          fecha
+        });
+
+        const idPedido = docRef.id;
+
+        // ======= PLANTILLA DUEÑO =======
+        const mensajeDueño = `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;border:1px solid #e1e1e1;border-radius:10px;padding:20px;">
+            <img src="https://i.imgur.com/Jxqph1L.png" alt="MasterFibraEC" style="max-width:180px;margin-bottom:20px;">
+            <h2 style="color:#1a73e8;">🚀 Nuevo pedido recibido</h2>
+            <p>Se ha registrado un nuevo pedido desde la tienda:</p>
+            <table style="border-collapse:collapse;width:100%;max-width:500px;">
+              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">📦 <b>ID Pedido:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${idPedido}</td></tr>
+              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">👤 <b>Cliente:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${nombre}</td></tr>
+              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">✉️ <b>Email:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${email}</td></tr>
+              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">🛠 <b>Producto:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${producto}</td></tr>
+              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">📅 <b>Fecha:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${fecha}</td></tr>
+              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">💰 <b>Total:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">$${total.toFixed(2)}</td></tr>
+            </table>
+            <p style="margin-top:25px;color:#555;font-size:14px;">📊 Puedes revisar este pedido en tu panel de <b>Firebase → Firestore → orders</b>.</p>
+            <hr style="margin:25px 0;">
+            <p style="font-size:12px;color:#888;">Este correo se generó automáticamente desde el sistema de pedidos de <b>MasterFibraEC</b>.</p>
           </div>
-        </div>`;
-      grid.appendChild(col);
-    });
-  }
+        `;
 
-  select.addEventListener('change', e=>renderProducts(e.target.value));
-  // Anchor hash category
-  const hash = location.hash.replace('#','');
-  if (hash) select.value = hash;
-  renderProducts(select.value);
-</script>
+        // ======= PLANTILLA CLIENTE =======
+        const mensajeCliente = `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;border:1px solid #e1e1e1;border-radius:10px;padding:20px;">
+            <img src="https://i.imgur.com/Jxqph1L.png" alt="MasterFibraEC" style="max-width:180px;margin-bottom:20px;">
+            <h2 style="color:#1a73e8;">¡Gracias por tu pedido, ${nombre}! 💙</h2>
+            <p>Hemos recibido tu pedido correctamente. A continuación los detalles:</p>
+            <table style="border-collapse:collapse;width:100%;max-width:500px;">
+              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">🧾 <b>N° Pedido:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${idPedido}</td></tr>
+              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">🛠 <b>Producto:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${producto}</td></tr>
+              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">📅 <b>Fecha:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${fecha}</td></tr>
+              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">💰 <b>Total:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">$${total.toFixed(2)}</td></tr>
+            </table>
+            <p style="margin-top:20px;font-size:14px;color:#555;">Nos pondremos en contacto contigo pronto para confirmar el envío.</p>
+            <div style="margin-top:25px;text-align:center;">
+              <a href="https://wa.me/593995783624" style="background:#25d366;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">💬 Contactar por WhatsApp</a>
+            </div>
+            <p style="text-align:center;margin-top:20px;font-size:13px;color:#777;">
+              Síguenos en redes:<br>
+              <a href="https://www.instagram.com/masterfibraec" style="color:#1a73e8;text-decoration:none;">📸 Instagram</a> |
+              <a href="https://masterfibraec.com" style="color:#1a73e8;text-decoration:none;">🌐 Sitio Web</a>
+            </p>
+            <hr style="margin:25px 0;">
+            <p style="text-align:center;font-size:12px;color:#888;">© 2025 MasterFibraEC. Todos los derechos reservados.</p>
+          </div>
+        `;
+
+        // ======= Enviar al dueño =======
+        await fetch("https://formsubmit.co/ajax/guillermosimancas95@gmail.com", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            _subject: "Nuevo Pedido Recibido - MasterFibraEC 🚀",
+            message: mensajeDueño,
+            _template: "table"
+          }),
+        });
+
+        // ======= Enviar al cliente =======
+        await fetch(`https://formsubmit.co/ajax/${email}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            _subject: "Confirmación de tu pedido - MasterFibraEC 🧾",
+            message: mensajeCliente,
+            _template: "table"
+          }),
+        });
+
+        alert("✅ Pedido guardado correctamente y correos enviados.");
+        document.getElementById("formPedido").reset();
+      } catch (error) {
+        console.error("Error al guardar pedido:", error);
+        alert("❌ Ocurrió un error al procesar el pedido.");
+      }
+    }
+
+    window.guardarPedido = guardarPedido;
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f9fc;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 480px;
+      margin: 60px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #1a73e8;
+      margin-bottom: 25px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 5px;
+    }
+    button {
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #155ab6;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Formulario de Pedido</h1>
+    <form id="formPedido" onsubmit="event.preventDefault(); guardarPedido();">
+      <label>Nombre:</label>
+      <input type="text" id="nombre" required />
+
+      <label>Correo electrónico:</label>
+      <input type="email" id="email" required />
+
+      <label>Producto:</label>
+      <input type="text" id="producto" required />
+
+      <label>Total ($):</label>
+      <input type="number" id="total" required />
+
+      <button type="submit">Enviar Pedido</button>
+    </form>
+  </div>
 </body>
 </html>
