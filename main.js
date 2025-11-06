@@ -80,7 +80,6 @@ function renderCartTable(){
     </div>
   `;
 
-  // Botones auxiliares (WhatsApp / Vaciar) y checkout
   const form = document.getElementById('checkoutForm');
   const btnWA = document.getElementById('btnWA');
   const btnClear = document.getElementById('btnClear');
@@ -96,7 +95,6 @@ function renderCartTable(){
   }
 
   if (form){
-    // Carga datos guardados
     if (USER){
       form.name.value   = USER.name||'';
       form.email.value  = USER.email||'';
@@ -104,8 +102,10 @@ function renderCartTable(){
       form.phone.value  = USER.phone||'';
       form.address.value= USER.address||'';
     }
-    form.onsubmit = (e)=>{
+
+    form.onsubmit = async (e)=>{
       e.preventDefault();
+
       USER = {
         name:   form.name.value.trim(),
         email:  form.email.value.trim(),
@@ -115,11 +115,31 @@ function renderCartTable(){
       };
       saveUser();
 
-      const total = cartTotal().toFixed(2); // monto exacto
-      // Paypal.me con monto
+      const total = cartTotal().toFixed(2);
+      const pedido = { ...USER, cart: CART, total, fecha: new Date().toISOString() };
+
+      // 🔥 Firebase
+      const okFirebase = await (window.saveOrderToFirebase ? saveOrderToFirebase(pedido) : false);
+
+      // ✉️ EmailJS
+      const okEmail = await (window.sendEmailNotification ? sendEmailNotification(pedido) : false);
+
+      // ✅ Mostrar modal
+      const msgBox = document.getElementById('orderModalMsg');
+      if (okFirebase && okEmail){
+        msgBox.textContent = `Gracias ${USER.name}, tu pedido fue registrado correctamente. Recibirás una copia en tu correo.`;
+      } else if (okFirebase){
+        msgBox.textContent = `El pedido se guardó correctamente, pero no se pudo enviar el correo.`;
+      } else {
+        msgBox.textContent = `Hubo un problema al procesar tu pedido. Verifica tu conexión.`;
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('orderModal'));
+      modal.show();
+
+      // 🔗 PayPal
       const paypalLink = `https://paypal.me/ElvisGomez1985/${total}`;
       window.open(paypalLink, '_blank');
     };
   }
 }
-
