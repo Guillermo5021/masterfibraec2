@@ -3,18 +3,104 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tienda MasterFibraEC</title>
+  <title>Tienda Oficial - MasterFibraEC</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background-color: #f5f6fa;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #007bff;
+      color: white;
+      text-align: center;
+      padding: 1.2rem 0;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    main {
+      max-width: 700px;
+      margin: 2rem auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 0.4rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 1.5rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #msg {
+      text-align: center;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      color: #666;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>🛒 Tienda Oficial - MasterFibraEC</header>
+
+  <main>
+    <h2>Formulario de Pedido</h2>
+    <form id="orderForm">
+      <label for="nombre">Nombre del cliente:</label>
+      <input type="text" id="nombre" required />
+
+      <label for="email">Correo electrónico:</label>
+      <input type="email" id="email" required />
+
+      <label for="productos">Producto(s) solicitados:</label>
+      <textarea id="productos" rows="3" placeholder="Ejemplo: Parachoques, maceta decorativa..." required></textarea>
+
+      <label for="total">Total (USD):</label>
+      <input type="number" id="total" step="0.01" required />
+
+      <button type="submit">Enviar Pedido</button>
+      <p id="msg"></p>
+    </form>
+  </main>
+
+  <footer>© 2025 MasterFibraEC | Fabricación en fibra de vidrio</footer>
 
   <script type="module">
-    // ======= CONFIGURACIÓN FIREBASE =======
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+    // 🔹 Configuración Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyB5OQhX5_Uu3lunMBxcOqQL4yHhe-vdXzA",
       authDomain: "masterfibraec.firebaseapp.com",
       projectId: "masterfibraec",
-      storageBucket: "masterfibraec.firebasestorage.app",
+      storageBucket: "masterfibraec.appspot.com",
       messagingSenderId: "568089252571",
       appId: "1:568089252571:web:db36ba765eaa45029c32fe"
     };
@@ -22,185 +108,54 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ======= GUARDAR PEDIDO =======
-    async function guardarPedido() {
+    // 📤 Manejo del formulario
+    const form = document.getElementById("orderForm");
+    const msg = document.getElementById("msg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.textContent = "Enviando pedido...";
+
       const nombre = document.getElementById("nombre").value.trim();
       const email = document.getElementById("email").value.trim();
-      const producto = document.getElementById("producto").value.trim();
+      const productos = document.getElementById("productos").value.trim();
       const total = parseFloat(document.getElementById("total").value);
-
-      if (!nombre || !email || !producto || isNaN(total)) {
-        alert("⚠️ Por favor completa todos los campos correctamente.");
-        return;
-      }
+      const fecha = new Date().toLocaleString("es-EC");
 
       try {
-        const fecha = new Date().toISOString().split("T")[0];
-
-        // Guardar pedido en Firebase
-        const docRef = await addDoc(collection(db, "orders"), {
+        // 🔹 Guardar en Firestore
+        await addDoc(collection(db, "orders"), {
           nombre,
           email,
-          productos: producto,
+          productos,
           total,
           fecha
         });
 
-        const idPedido = docRef.id;
+        // 🔹 Enviar correo (usando FormSubmit)
+        const formData = new FormData();
+        formData.append("nombre", nombre);
+        formData.append("email", email);
+        formData.append("productos", productos);
+        formData.append("total", total);
+        formData.append("fecha", fecha);
+        formData.append("_subject", `Nuevo pedido de ${nombre}`);
+        formData.append("_replyto", email);
 
-        // ======= PLANTILLA DUEÑO =======
-        const mensajeDueño = `
-          <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;border:1px solid #e1e1e1;border-radius:10px;padding:20px;">
-            <img src="https://i.imgur.com/Jxqph1L.png" alt="MasterFibraEC" style="max-width:180px;margin-bottom:20px;">
-            <h2 style="color:#1a73e8;">🚀 Nuevo pedido recibido</h2>
-            <p>Se ha registrado un nuevo pedido desde la tienda:</p>
-            <table style="border-collapse:collapse;width:100%;max-width:500px;">
-              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">📦 <b>ID Pedido:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${idPedido}</td></tr>
-              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">👤 <b>Cliente:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${nombre}</td></tr>
-              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">✉️ <b>Email:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${email}</td></tr>
-              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">🛠 <b>Producto:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${producto}</td></tr>
-              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">📅 <b>Fecha:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${fecha}</td></tr>
-              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">💰 <b>Total:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">$${total.toFixed(2)}</td></tr>
-            </table>
-            <p style="margin-top:25px;color:#555;font-size:14px;">📊 Puedes revisar este pedido en tu panel de <b>Firebase → Firestore → orders</b>.</p>
-            <hr style="margin:25px 0;">
-            <p style="font-size:12px;color:#888;">Este correo se generó automáticamente desde el sistema de pedidos de <b>MasterFibraEC</b>.</p>
-          </div>
-        `;
-
-        // ======= PLANTILLA CLIENTE =======
-        const mensajeCliente = `
-          <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;border:1px solid #e1e1e1;border-radius:10px;padding:20px;">
-            <img src="https://i.imgur.com/Jxqph1L.png" alt="MasterFibraEC" style="max-width:180px;margin-bottom:20px;">
-            <h2 style="color:#1a73e8;">¡Gracias por tu pedido, ${nombre}! 💙</h2>
-            <p>Hemos recibido tu pedido correctamente. A continuación los detalles:</p>
-            <table style="border-collapse:collapse;width:100%;max-width:500px;">
-              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">🧾 <b>N° Pedido:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${idPedido}</td></tr>
-              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">🛠 <b>Producto:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${producto}</td></tr>
-              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">📅 <b>Fecha:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">${fecha}</td></tr>
-              <tr><td style="padding:8px;border-bottom:1px solid #ddd;">💰 <b>Total:</b></td><td style="padding:8px;border-bottom:1px solid #ddd;">$${total.toFixed(2)}</td></tr>
-            </table>
-            <p style="margin-top:20px;font-size:14px;color:#555;">Nos pondremos en contacto contigo pronto para confirmar el envío.</p>
-            <div style="margin-top:25px;text-align:center;">
-              <a href="https://wa.me/593995783624" style="background:#25d366;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">💬 Contactar por WhatsApp</a>
-            </div>
-            <p style="text-align:center;margin-top:20px;font-size:13px;color:#777;">
-              Síguenos en redes:<br>
-              <a href="https://www.instagram.com/masterfibraec" style="color:#1a73e8;text-decoration:none;">📸 Instagram</a> |
-              <a href="https://masterfibraec.com" style="color:#1a73e8;text-decoration:none;">🌐 Sitio Web</a>
-            </p>
-            <hr style="margin:25px 0;">
-            <p style="text-align:center;font-size:12px;color:#888;">© 2025 MasterFibraEC. Todos los derechos reservados.</p>
-          </div>
-        `;
-
-        // ======= Enviar al dueño =======
         await fetch("https://formsubmit.co/ajax/guillermosimancas95@gmail.com", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
-            _subject: "Nuevo Pedido Recibido - MasterFibraEC 🚀",
-            message: mensajeDueño,
-            _template: "table"
-          }),
+          body: formData
         });
 
-        // ======= Enviar al cliente =======
-        await fetch(`https://formsubmit.co/ajax/${email}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
-            _subject: "Confirmación de tu pedido - MasterFibraEC 🧾",
-            message: mensajeCliente,
-            _template: "table"
-          }),
-        });
-
-        alert("✅ Pedido guardado correctamente y correos enviados.");
-        document.getElementById("formPedido").reset();
+        msg.style.color = "green";
+        msg.textContent = "✅ Pedido enviado correctamente. Te contactaremos pronto.";
+        form.reset();
       } catch (error) {
-        console.error("Error al guardar pedido:", error);
-        alert("❌ Ocurrió un error al procesar el pedido.");
+        console.error("Error al enviar pedido:", error);
+        msg.style.color = "red";
+        msg.textContent = "❌ Error al enviar el pedido. Inténtalo nuevamente.";
       }
-    }
-
-    window.guardarPedido = guardarPedido;
+    });
   </script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f7f9fc;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 480px;
-      margin: 60px auto;
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #1a73e8;
-      margin-bottom: 25px;
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 15px;
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      margin-top: 5px;
-    }
-    button {
-      background-color: #1a73e8;
-      color: white;
-      border: none;
-      padding: 12px;
-      width: 100%;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 20px;
-      transition: background 0.3s ease;
-    }
-    button:hover {
-      background-color: #155ab6;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="container">
-    <h1>Formulario de Pedido</h1>
-    <form id="formPedido" onsubmit="event.preventDefault(); guardarPedido();">
-      <label>Nombre:</label>
-      <input type="text" id="nombre" required />
-
-      <label>Correo electrónico:</label>
-      <input type="email" id="email" required />
-
-      <label>Producto:</label>
-      <input type="text" id="producto" required />
-
-      <label>Total ($):</label>
-      <input type="number" id="total" required />
-
-      <button type="submit">Enviar Pedido</button>
-    </form>
-  </div>
 </body>
 </html>
