@@ -106,32 +106,40 @@
   };
 </script>
 
-<!-- ✉️ EmailJS -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<!-- ✉️ EmailJS (versión correcta v3) -->
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
-  (function(){
-    emailjs.init("dEHEg7mWdrFo5jAl");
+  // Inicializar EmailJS con tu Public Key
+  (function() {
+    emailjs.init("dEHEg7mWdrFo5jAl"); // Tu clave pública correcta
   })();
 
-  window.sendEmailNotification = async (pedido)=>{
-    try{
-      await emailjs.send("service_xx3pjvi", "template_4vowhd8", {
+  // Función global para envío de correos
+  window.sendEmailNotification = async (pedido) => {
+    const SERVICE_ID = "service_xx3pjvi";
+    const TEMPLATE_EMPRESA = "template_4vowhd8";
+    const TEMPLATE_CLIENTE = "template_tz4xxnd";
+
+    try {
+      // Enviar correo a la empresa
+      await emailjs.send(SERVICE_ID, TEMPLATE_EMPRESA, {
         to_name: pedido.name,
         order_total: pedido.total,
-        order_summary: pedido.cart.map(i => `${i.name} x${i.qty} - $${i.price*i.qty}`).join(", "),
-        email: pedido.email,
+        order_summary: pedido.cart.map(i => `${i.name} x${i.qty} - $${i.price * i.qty}`).join(", "),
+        email: pedido.email
       });
 
-      await emailjs.send("service_xx3pjvi", "template_tz4xxnd", {
+      // Enviar copia al cliente
+      await emailjs.send(SERVICE_ID, TEMPLATE_CLIENTE, {
         to_name: pedido.name,
         order_id: new Date().getTime(),
-        email: pedido.email,
+        email: pedido.email
       });
 
       console.log("✅ Correos enviados correctamente con EmailJS");
       return true;
     } catch (error) {
-      console.error("❌ Error al enviar correos:", error);
+      console.error("❌ Error al enviar correos con EmailJS:", error);
       return false;
     }
   };
